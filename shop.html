@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>💌 letters</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#031628; --paper:#fff; --text:#374151;
+    --wrap:#f5edd1; --flap:#ecdeb8; --body:#e6cfa7;
+    --accent:#f59e0b; --btn:#fbbf24; --btn-hover:#fcd34d;
+    --seal:#541717;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif}
+  header{max-width:1100px;margin:24px auto 8px;padding:0 16px}
+  h1{margin:0 0 10px}
+  .meta{opacity:.9;margin:0 0 10px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
+  .btn.primary{background:#000000;color:#fff}
+  .btn.primary:hover{background:#000000}
+  .btn.light{background:#f3f4f6;color:#111}
+
+  /* Grid */
+  .grid{
+    max-width:1100px; margin:18px auto 48px; padding:0 16px;
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+    gap:20px;
+  }
+
+  /* Karte */
+  .card{
+    background:var(--wrap);
+    border:2px solid var(--accent);
+    border-radius:14px;
+    padding:16px;
+    color:#111;
+    display:flex; 
+    flex-direction:column;
+    gap:16px;
+    transition:opacity .2s ease;
+    min-height:280px;
+  }
+  .card.locked{opacity:.4; filter:grayscale(50%)}
+
+  /* Umschlag Container */
+  .envelope{
+    position:relative;
+    width: 100%;
+    height:180px;
+    background:var(--body);
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 4px 8px rgba(0,0,0,.15);
+  }
+
+  /* Brief-Inhalt - versteckt bis geöffnet */
+  .letter{
+    position:absolute;
+    top:15px; left:15px; right:15px; bottom:15px;
+    background:var(--paper);
+    color:var(--text);
+    border-radius:6px;
+    padding:16px;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    opacity:0;
+    transform:scale(0.8);
+    transition:all 0.5s ease;
+  }
+  .letter p{
+    margin:0;
+    font-size:14px;
+    line-height:1.5;
+  }
+
+  /* Umschlag-Körper */
+  .envelope-body{
+    position:absolute;
+    top:80px; left:0; right:0; bottom:0;
+    background:var(--body);
+    border-radius:0 0 10px 10px;
+    z-index:2;
+    transition:transform 0.6s ease;
+  }
+
+  /* Umschlag-Klappe mit Siegel */
+  .envelope-flap{
+    position:absolute;
+    top:0; left:0; right:0;
+    height:100px;
+    background:var(--flap);
+    clip-path:polygon(0% 0%, 100% 0%, 50% 80%);
+    z-index:3;
+    transition:transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform-origin:top center;
+  }
+
+  /* Herz-Siegel auf der Klappe */
+  .seal{
+    position:absolute;
+    top:65px;
+    left:50%;
+    width:22px;
+    height:22px;
+    background:var(--seal);
+    transform:translate(-50%, -50%) rotate(45deg);
+    border-radius:3px 0;
+    box-shadow:0 3px 8px rgba(251, 24, 227, 0.6);
+  }
+  .seal::before,
+  .seal::after {
+    content:'';
+    position:absolute;
+    width:22px;
+    height:22px;
+    background:var(--seal);
+    border-radius:50%;
+  }
+  .seal::before { top:-11px; left:0; }
+  .seal::after { top:0; left:-11px; }
+
+  /* Geöffneter Zustand */
+  .card.opened .envelope-flap{
+    transform:rotateX(-180deg);
+  }
+  .card.opened .envelope-body{
+    transform:translateY(100%);
+  }
+  .card.opened .letter{
+    opacity:1;
+    transform:scale(1);
+    transition-delay:0.4s;
+  }
+
+  /* Footer */
+  .card-footer{
+    display:flex; 
+    gap:12px; 
+    align-items:center; 
+    justify-content:space-between;
+  }
+  .card-title{
+    margin:0; 
+    font-size:16px; 
+    font-weight:800; 
+    color:#111;
+    display:flex; 
+    align-items:center; 
+    gap:8px;
+  }
+  .badge{
+    font-size:11px; 
+    font-weight:700; 
+    color:#111;
+    background:#fde68a; 
+    border:1px dashed var(--accent);
+    padding:3px 8px; 
+    border-radius:12px;
+  }
+  .toggle-btn{
+    padding:8px 12px;
+    border:0; 
+    border-radius:8px; 
+    font-weight:700; 
+    cursor:pointer;
+    background:var(--btn);
+    font-size:13px;
+    transition:all .2s ease;
+  }
+  .toggle-btn:hover:not(:disabled){
+    background:var(--btn-hover);
+    transform:translateY(-1px);
+  }
+  .toggle-btn:disabled{opacity:0.5; cursor:not-allowed; background:#999;}
+
+  @media (max-width: 768px) {
+    .grid{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header style="position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08)">
+  <div style="max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:flex-end">
+    <div id="coinHUD" style="display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);font-weight:700">🪙 <span id="coinCount">0</span></div>
+  </div>
+</header>
+
+
+<header>
+  <h1>📜 letters</h1>
+  <div class="meta" id="meta">–</div>
+  <div class="actions">
+    <a href="game.html" class="btn primary">back</a>
+    <button id="reset" class="btn light">reset score</button>
+  </div>
+</header>
+
+<section class="grid" id="grid"></section>
+
+<script>
+(() => {
+  
+  // Coins & purchases
+  const store = {
+    get coins(){ return parseInt(localStorage.getItem('ldg_coins')||'0',10) },
+    set coins(v){ localStorage.setItem('ldg_coins', String(v)); const hud=document.getElementById('coinCount'); if(hud) hud.textContent=String(v) },
+    get purchases(){ return JSON.parse(localStorage.getItem('ldg_purchases')||'{}') },
+    set purchases(v){ localStorage.setItem('ldg_purchases', JSON.stringify(v)) },
+  };
+  function buy(id, price){
+    if(store.coins < price) return false;
+    const p = store.purchases; store.coins = store.coins - price; p[id] = true; store.purchases = p; return true;
+  }
+  function owns(id){ const p = store.purchases; return !!p[id] }
+  const LETTER_PRICE = 15; // adjust per letter if you want
+  (function(){ const hud=document.getElementById('coinCount'); if(hud) hud.textContent = String(store.coins) })();
+// Brief-Inhalte - hier kannst du weitere Briefe hinzufügen!
+  const MESSAGES = [
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "Test Versuch",
+    "letzter Test"
+  ];
+
+  // Score aus Session Storage
+  const unlockedCount = 0; // replaced: use purchases per letter
+const grid = document.getElementById('grid');
+  const meta = document.getElementById('meta');
+  
+  
+  function updateMeta(){
+    const p = store.purchases; let cnt = 0; for(const k in p){ if(k.startsWith('letter-') && p[k]) cnt++; }
+    meta.textContent = `Unlocked: ${cnt} / ${MESSAGES.length} • Coins: ${store.coins}`;
+    const hud=document.getElementById('coinCount'); if(hud) hud.textContent=String(store.coins);
+  }
+// Briefe erstellen
+  MESSAGES.forEach((message, index) => {
+    const id = `letter-${index+1}`; const isUnlocked = owns(id);
+    
+    // Hauptkarte
+    const card = document.createElement('div');
+    card.className = 'card' + (isUnlocked ? '' : ' locked');
+    
+    // Umschlag-Container
+    const envelope = document.createElement('div');
+    envelope.className = 'envelope';
+    
+    // Brief-Inhalt
+    const letter = document.createElement('div');
+    letter.className = 'letter';
+    const letterText = document.createElement('p');
+    letterText.textContent = message;
+    letter.appendChild(letterText);
+    
+    // Umschlag-Körper
+    const envelopeBody = document.createElement('div');
+    envelopeBody.className = 'envelope-body';
+    
+    // Umschlag-Klappe
+    const envelopeFlap = document.createElement('div');
+    envelopeFlap.className = 'envelope-flap';
+    
+    // Siegel auf der Klappe
+    const seal = document.createElement('div');
+    seal.className = 'seal';
+    envelopeFlap.appendChild(seal);
+    
+    // Zusammenbauen
+    envelope.appendChild(letter);
+    envelope.appendChild(envelopeBody);
+    envelope.appendChild(envelopeFlap);
+    
+    // Footer mit Button
+    const footer = document.createElement('div');
+    footer.className = 'card-footer';
+    
+    const title = document.createElement('h3');
+    title.className = 'card-title';
+    title.innerHTML = `letter ${index + 1} <span class="badge">${isUnlocked ? 'unlocked' : 'locked'}</span>`;
+    
+    const button = document.createElement('button');
+    button.className = 'toggle-btn';
+    button.textContent = isUnlocked ? 'open' : `buy (🪙 ${LETTER_PRICE})`;
+    if (!isUnlocked) {
+      button.addEventListener('click', () => {
+        if (buy(id, LETTER_PRICE)) {
+          card.classList.remove('locked');
+          title.innerHTML = `letter ${index + 1} <span class="badge">unlocked</span>`;
+          button.textContent = 'open';
+          // enable open/close toggle
+          let isOpen = true;
+          card.classList.add('opened');
+          button.onclick = () => { isOpen = !isOpen; card.classList.toggle('opened', isOpen); };
+          updateMeta();
+        } else {
+          button.animate([{transform:'scale(1)'},{transform:'scale(0.96)'},{transform:'scale(1)'}],{duration:200});
+        
+  updateMeta();
+}
+      });
+    } else {
+      // Event für Öffnen/Schließen
+      let isOpen = false;
+      button.addEventListener('click', () => {
+        isOpen = !isOpen;
+        if (isOpen) {
+          card.classList.add('opened');
+          button.textContent = 'close';
+        } else {
+          card.classList.remove('opened');
+          button.textContent = 'open';
+        }
+      });
+    }
+    
+    footer.appendChild(title);
+    footer.appendChild(button);
+    
+    card.appendChild(envelope);
+    card.appendChild(footer);
+    grid.appendChild(card);
+  });
+
+  // Reset Button
+  document.getElementById('reset').addEventListener('click', () => {
+    if (confirm('reset score?')) {
+      sessionStorage.removeItem('heartScore');
+      location.reload();
+    }
+  });
+})();
+</script>
+
+<section style="max-width:1100px;margin:20px auto;padding:0 16px">
+  <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:16px;color:#fff">
+    <h2 style="margin:0 0 8px">🎁 Big Present</h2>
+    <p style="margin:0 0 12px;opacity:.85">Save up coins and unlock the main surprise.</p>
+    <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap">
+      <div><strong>Price:</strong> 🪙 80</div>
+      <button id="bigBtn" style="padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:#fbbf24;color:#111;font-weight:700;cursor:pointer">Unlock</button>
+    </div>
+    <div id="bigReveal" style="display:none;margin-top:12px;background:rgba(0,0,0,0.25);padding:12px;border-radius:12px">Surprise unlocked! (Replace this with your real gift: link, video, artwork…)</div>
+  </div>
+</section>
+<script>
+  (function(){
+    const id='biggift', price=80;
+    const btn = document.getElementById('bigBtn');
+    const box = document.getElementById('bigReveal');
+    function owns(id){ const p = JSON.parse(localStorage.getItem('ldg_purchases')||'{}'); return !!p[id] }
+    function buy(id, price){
+      const coins = parseInt(localStorage.getItem('ldg_coins')||'0',10);
+      if(coins < price) return false;
+      localStorage.setItem('ldg_coins', String(coins - price));
+      const p = JSON.parse(localStorage.getItem('ldg_purchases')||'{}'); p[id]=true; localStorage.setItem('ldg_purchases', JSON.stringify(p));
+      return true;
+    }
+    function refresh(){
+      const owned = owns(id);
+      btn.textContent = owned ? 'Open' : 'Unlock';
+      if(owned){ box.style.display = 'block'; }
+      const hud=document.getElementById('coinCount'); if(hud){ hud.textContent = localStorage.getItem('ldg_coins')||'0' }
+    }
+    btn.addEventListener('click', ()=>{
+      if(owns(id)){ box.style.display='block'; return; }
+      if(buy(id, price)){ refresh(); }
+      else { btn.animate([{transform:'scale(1)'},{transform:'scale(0.96)'},{transform:'scale(1)'}],{duration:200}); }
+    });
+    refresh();
+  })();
+</script>
+
+</body>
+</html>
