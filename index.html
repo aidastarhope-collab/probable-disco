@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Happy Birthday</title>
+  <style>
+    :root{
+      --bg: radial-gradient(1000px 800px at 0% -10%, #111827 0%, transparent 60%),
+            radial-gradient(1000px 800px at 100% 0%, #1f2937 0%, transparent 60%),
+            linear-gradient(180deg,#0b1220,#0f172a);
+      --card: rgba(255,255,255,0.06);
+      --glass: rgba(255,255,255,0.06);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #b4a7d6;
+      --shadow: 0 10px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color:var(--text); background: var(--bg); overflow-x:hidden;}
+    header{position:sticky; top:0; z-index:10; backdrop-filter: blur(10px); background: var(--glass); border-bottom:1px solid rgba(255,255,255,0.12);}
+    header .wrap{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 20px; max-width:960px; margin:0 auto}
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:999px; background:rgba(0,0,0,0.25); box-shadow: var(--shadow); font-weight:700;}
+    .container{max-width:960px;margin:0 auto;padding:24px}
+    .center{ display:grid; place-items:center; text-align:center }
+    .card{background: var(--card); border:1px solid rgba(255,255,255,0.12); border-radius: var(--radius); box-shadow: var(--shadow); padding:24px; backdrop-filter: blur(10px);}
+    .btn{appearance:none; border:0; cursor:pointer; text-decoration:none; color:#111; font-weight:700; background: var(--accent); padding:12px 18px; border-radius:14px; box-shadow: var(--shadow); transition: transform .08s ease, filter .2s;}
+    .btn.ghost{background:#111827; color:#e5e7eb; border:1px solid rgba(255,255,255,0.15)}
+    .btn:active{transform: translateY(1px)}
+    .buttons{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:20px}
+    p{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div style="font-weight:800">Happy Birthday! 🎂</div>
+      <div class="pill">🪙 Coins: <span id="coinCount">0</span></div>
+    </div>
+  </header>
+
+  <div class="container center" style="min-height:65vh">
+    <div class="card" style="max-width:760px">
+      <h1 style="font-size:clamp(32px, 5vw, 52px); line-height:1.1; margin:10px 0">Happy Birthday! 🎉</h1>
+      <p>I made you a tiny web adventure with minigames, quests, and a shop. Earn coins, unlock letters, and find your big present. 💌</p>
+      <div class="buttons">
+        <a class="btn" href="minigames.html">Minigames</a>
+        <a class="btn" href="quests.html">Quests</a>
+        <a class="btn" href="shop.html">Shop</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const c = parseInt(localStorage.getItem('ldg_coins')||'0',10);
+  document.getElementById('coinCount').textContent = c;
+  window.addEventListener('storage', ()=>{
+    document.getElementById('coinCount').textContent = parseInt(localStorage.getItem('ldg_coins')||'0',10);
+  });
+</script>
+</body>
+</html>
