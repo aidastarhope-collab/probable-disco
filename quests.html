@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quests</title>
+  <style>
+    :root{--text:#e5e7eb}
+    *{box-sizing:border-box}
+    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:linear-gradient(180deg,#0f172a,#111827); color:var(--text)}
+    header{position:sticky; top:0; z-index:10; backdrop-filter: blur(10px); background: rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.15);}
+    header .wrap{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 20px; max-width:1100px; margin:0 auto}
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:999px; background:rgba(0,0,0,0.3); font-weight:700;}
+    .container{max-width:960px;margin:0 auto;padding:24px}
+    h1{margin:0 0 12px}
+    .card{background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); padding:24px;}
+    .grid{display:grid; gap:16px}
+    .quest{display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15)}
+    .quest input{transform:translateY(3px)}
+    .quest.done{opacity:.6;text-decoration:line-through}
+    .btn{appearance:none; border:0; cursor:pointer; color:#111; font-weight:700; background:#b4a7d6; padding:10px 16px; border-radius:12px;}
+    .btn.ghost{background:transparent;color:#e5e7eb;border:1px solid rgba(255,255,255,0.2)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <nav style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn" href="index.html">← Home</a>
+        <a class="btn" href="minigames.html">Minigames</a>
+        <a class="btn" href="shop.html">Shop</a>
+      </nav>
+      <div class="pill" title="Your coins">🪙 Coins: <small id="coinCount">0</small></div>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1>Quest Board 📜</h1>
+    <p>Complete little quests for bonus coins (+5 each).</p>
+    <div class="grid" id="questList"></div>
+    <div style="margin-top:16px">
+      <button class="btn ghost" id="resetBtn">Reset progress</button>
+    </div>
+  </div>
+
+<script>
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const store = {
+    get coins(){ return parseInt(localStorage.getItem('ldg_coins')||'0',10) },
+    set coins(v){ localStorage.setItem('ldg_coins', String(v)); $('#coinCount').textContent = String(v) },
+    get quests(){ return JSON.parse(localStorage.getItem('ldg_quests')||'{}') },
+    set quests(v){ localStorage.setItem('ldg_quests', JSON.stringify(v)) },
+  };
+  function addCoins(n){ store.coins = Math.max(0, store.coins + n) }
+  function renderCoins(){ $('#coinCount').textContent = store.coins }
+  renderCoins();
+
+  const defaultQuests = [
+    {id:'q1', text:'Tell me three birthday wishes ✨'},
+    {id:'q2', text:'Share a random photo from your week 📸'},
+    {id:'q3', text:'Pick a date idea for us 💡'},
+    {id:'q4', text:'Send me your favorite song today 🎵'},
+    {id:'q5', text:'Write one line you like about me 📝'},
+  ];
+
+  function renderQuests(){
+    const root = $('#questList'); root.innerHTML='';
+    const state = {...defaultQuests.reduce((a,q)=> (a[q.id]=false,a),{}), ...store.quests};
+    defaultQuests.forEach(q=>{
+      const row = document.createElement('label'); row.className = 'quest' + (state[q.id]? ' done' : '');
+      row.innerHTML = `<input type="checkbox" ${state[q.id]? 'checked' : ''}/> <div>${q.text}</div>`;
+      row.querySelector('input').addEventListener('change', (e)=>{
+        const checked = e.target.checked; const cur = store.quests; cur[q.id]=checked; store.quests=cur;
+        row.classList.toggle('done', checked);
+        if(checked) addCoins(5);
+      });
+      root.appendChild(row);
+    })
+  }
+  renderQuests();
+
+  $('#resetBtn').addEventListener('click', ()=>{
+    if(confirm('Reset coins and quests?')){
+      localStorage.removeItem('ldg_coins');
+      localStorage.removeItem('ldg_quests');
+      renderCoins(); renderQuests();
+    }
+  });
+</script>
+</body>
+</html>
