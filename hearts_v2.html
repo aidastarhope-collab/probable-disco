@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>Hearts Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;text-align:center;background:#182129;color:#8ba5bc}
+  h1{margin:20px 0}
+  .hud{display:flex;gap:16px;justify-content:center;margin:8px 0 0;font-weight:600}
+  canvas{background:#32516d;border:2px solid #031628;margin:16px auto;display:block;max-width:90vw}
+  #nextBtn{display:none;margin:8px auto 16px;padding:10px 16px;font-weight:700;border:0;border-radius:10px;background:#b4a7d6;cursor:pointer}
+  #nextBtn:hover{background:#ffd966}
+  .controls{margin:16px 0;padding:0 16px}
+  .controls p{margin:8px 0;font-size:14px;color:#666}
+  a{color:#111;text-decoration:none}
+  
+  /* Touch Controls */
+  .touch-controls{display:none;margin:16px 0;gap:16px;justify-content:center}
+  .touch-btn{padding:12px 20px;font-size:18px;border:0;border-radius:10px;background:#2E2E2E;color:white;font-weight:700;cursor:pointer;user-select:none}
+  .touch-btn:hover{background:#181717}
+  .touch-btn:active{transform:scale(0.95)}
+  
+  @media (max-width: 768px) {
+    .touch-controls{display:flex}
+  }
+</style>
+</head>
+<body>
+<h1>𝑪𝒐𝒍𝒍𝒆𝒄𝒕 𝒕𝒉𝒆 𝒉𝒆𝒂𝒓𝒕𝒔 <𝟑 .ᐟ</h1>
+
+<p class="subtitle">𝑡𝑟𝑦 𝑡𝑜 𝑐𝑜𝑙𝑙𝑒𝑐𝑡 𝑎𝑠 𝑚𝑎𝑛𝑦 𝘩𝑒𝑎𝑟𝑡𝑠 𝑎𝑠 𝑦𝑜𝑢 𝑐𝑎𝑛 𝑓𝑜𝑟 𝑎 𝑠𝑢𝑟𝑝𝑟𝑖𝑠𝑒.ᐟ</p>
+
+<canvas id="game" width="400" height="400"></canvas>
+
+<div class="touch-controls">
+  <button class="touch-btn" id="leftBtn">⬅️ left</button>
+  <button class="touch-btn" id="rightBtn">➡️ right</button>
+</div>
+
+<button 
+
+<script>
+(() => {
+  
+  const store = {
+    get coins(){ return parseInt(localStorage.getItem('ldg_coins')||'0',10) },
+    set coins(v){ localStorage.setItem('ldg_coins', String(v)) },
+  };
+  function addCoins(n){ store.coins = Math.max(0, (parseInt(localStorage.getItem('ldg_coins')||'0',10)) + n) }
+const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const nextBtn = document.getElementById('nextBtn');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+
+  const BASKET_W = 60;
+  const BASKET_H = 60;
+  const player = { x: 180, y: 340, w: BASKET_W, h: BASKET_H, speed: 20 };
+
+  const basketImg = new Image();
+  basketImg.src = "basket.png";
+
+  const heartSources = ["blue-heart.png", "pink-heart.png"];
+  const heartImages = [];
+
+  let loadedCount = 0;
+  let playableCount = 0;
+  function tryStart() {
+    if (loadedCount === heartSources.length && playableCount > 0) startGame();
+  }
+
+  heartSources.forEach(src => {
+    const img = new Image();
+    img.onload  = () => { playableCount++; loadedCount++; tryStart(); };
+    img.onerror = () => { console.warn("Bild konnte nicht geladen werden:", src); loadedCount++; tryStart(); };
+    img.src = src;
+    heartImages.push(img);
+  });
+
+  let hearts = [];
+  let score = 0;
+  let timeLeft = 30;
+  let gameOver = false;
+  let wonByScore = false;
+
+  let heartCount = 0;
+  const maxHearts = 80;
+
+  let spawner = null;
+  let stopCheck = null;
+  let timer = null;
+
+  function startGame(){
+    timer = setInterval(()=>{
+      if(timeLeft > 0){
+        timeLeft--;
+      } else {
+        endGame(false);
+      }
+    }, 1000);
+
+    spawner = setInterval(spawnHeart, 450);
+    stopCheck = setInterval(()=>{ if(gameOver){ clearInterval(spawner); clearInterval(stopCheck); } }, 300);
+    loop();
+  }
+
+  function endGame(won){
+    if (gameOver) return;
+    gameOver = true;
+    wonByScore = won;
+    clearInterval(timer);
+    clearInterval(spawner);
+    clearInterval(stopCheck);
+    sessionStorage.setItem('heartScore', String(score));
+    try{ addCoins(score); }catch(e){}
+    nextBtn.style.display = 'inline-block';
+  }
+
+  function spawnHeart(){
+    if(gameOver) return;
+    if(heartCount >= maxHearts) return;
+
+    const available = heartImages.filter(i => i.complete && i.naturalWidth > 0);
+    if (available.length === 0) {/* allow fallback */}
+
+    const img = available[Math.floor(Math.random() * available.length)];
+    hearts.push({
+      x: Math.random()* (400 - 24),
+      y: -24,
+      vy: 1.6 + Math.random()*1.4,
+      img
+    });
+
+    heartCount++;
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,400,400);
+
+    if (basketImg.complete && basketImg.naturalWidth > 0) {
+      ctx.drawImage(basketImg, player.x, player.y, player.w, player.h);
+    } else {
+      ctx.fillStyle = 'yellow';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+    }
+
+    hearts.forEach(h => {
+      if (h.img.complete && h.img.naturalWidth > 0) {
+        
+if (h.img && h.img.complete && h.img.naturalWidth > 0) {
+  ctx.drawImage(h.img, h.x, h.y, 24, 24);
+} else {
+  ctx.fillStyle = '#ff7ab5';
+  ctx.beginPath();
+  const r = 6;
+  ctx.arc(h.x+8, h.y+10, r, 0, Math.PI*2);
+  ctx.arc(h.x+16, h.y+10, r, 0, Math.PI*2);
+  ctx.moveTo(h.x+22, h.y+12);
+  ctx.lineTo(h.x+12, h.y+24);
+  ctx.lineTo(h.x+2, h.y+12);
+  ctx.closePath();
+  ctx.fill();
+}
+
+      }
+    });
+
+    ctx.fillStyle = '#111';
+    ctx.font = '14px Arial';
+    ctx.fillText('𝐬𝐜𝐨𝐫𝐞: ' + score, 10, 20);
+    ctx.fillText('𝐭𝐢𝐦𝐞: ' + timeLeft + 's', 330, 20);
+
+    if(gameOver){
+      ctx.fillStyle = '#111';
+      ctx.font = '22px Arial';
+      if(wonByScore){
+        ctx.fillText('all hearts collected!', 85, 200);
+      } else {
+        ctx.fillText('time is over!', 105, 200);
+      }
+      ctx.fillText('𝐞𝐧𝐝𝐬𝐜𝐨𝐫𝐞: ' + score, 135, 230);
+    }
+  }
+
+  function update(){
+    if(gameOver) return;
+    hearts.forEach(h => h.y += h.vy);
+
+    hearts = hearts.filter(h => {
+      if(h.y > 424) return false;
+      const heartCx = h.x + 12, heartCy = h.y + 12;
+      const withinX = heartCx > player.x && heartCx < player.x + player.w;
+      const withinY = heartCy > player.y && heartCy < player.y + player.h + 10;
+      if(withinX && withinY){
+        score++;
+        return false;
+      }
+      return true;
+    });
+
+    // 💡 Spiel beenden bei 50 gesammelten Herzen
+    if (score >= 50 && !gameOver) {
+      endGame(true);
+    }
+  }
+
+  function loop(){
+    update(); draw();
+    requestAnimationFrame(loop);
+  }
+
+  function moveLeft(){
+    if(gameOver) return;
+    player.x = Math.max(0, player.x - player.speed);
+  }
+  function moveRight(){
+    if(gameOver) return;
+    player.x = Math.min(400 - player.w, player.x + player.speed);
+  }
+
+  window.addEventListener('keydown', e=>{
+    if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
+      e.preventDefault();
+    }
+    if(e.key === 'ArrowLeft') moveLeft();
+    if(e.key === 'ArrowRight') moveRight();
+  }, { passive:false });
+
+  leftBtn.addEventListener('click', moveLeft);
+  rightBtn.addEventListener('click', moveRight);
+  leftBtn.addEventListener('touchstart', e => {e.preventDefault(); moveLeft();}, {passive:false});
+  rightBtn.addEventListener('touchstart', e => {e.preventDefault(); moveRight();}, {passive:false});
+})();
+</script>
+</body>
+</html>
