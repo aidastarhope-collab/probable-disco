@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Minigames</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{ --text:#e5e7eb; --muted:#9ca3af; --panel:rgba(255,255,255,0.06); }
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;background:linear-gradient(180deg,#0b1220,#0f172a);color:var(--text)}
+  header{position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.12)}
+  .wrap{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.2);font-weight:700}
+  .container{max-width:1100px;margin:0 auto;padding:16px}
+  details{background:var(--panel);border:1px solid rgba(255,255,255,0.15);border-radius:14px;margin:12px 0;overflow:hidden}
+  summary{cursor:pointer;list-style:none;padding:14px 16px;font-weight:800}
+  summary::-webkit-details-marker{display:none}
+  .inner{padding:0 0 12px}
+  .launch{margin:0 16px 12px;display:flex;gap:10px;align-items:center}
+  .start{padding:10px 16px;font-weight:800;border:1px solid rgba(255,255,255,0.2);border-radius:12px;background:#b4a7d6;color:#111;cursor:pointer}
+  .start:disabled{opacity:.6;cursor:not-allowed}
+  iframe{width:100%;height:560px;border:0;border-top:1px solid rgba(255,255,255,0.15);background:#0b1220;border-radius:0 0 14px 14px;display:none}
+  p.note{color:var(--muted);margin:8px 16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h2 style="margin:0">Minigames</h2>
+    <div class="pill">🪙 Coins: <span id="coinCount">0</span></div>
+  </div>
+</header>
+
+<div class="container">
+  <details>
+    <summary>❤️ Hearts (your original game)</summary>
+    <div class="inner">
+      <div class="launch">
+        <button class="start" data-target="g1">Start</button>
+        <p class="note">Game loads after you click Start.</p>
+      </div>
+      <iframe id="g1" data-src="hearts.html" title="Hearts Game"></iframe>
+    </div>
+  </details>
+
+  <details>
+    <summary>💖 Heart Clicker (15 seconds)</summary>
+    <div class="inner">
+      <div class="launch">
+        <button class="start" data-target="g2">Start</button>
+        <p class="note">Click as many hearts as possible in 15s.</p>
+      </div>
+      <iframe id="g2" data-src="clicker15.html" title="Heart Clicker"></iframe>
+    </div>
+  </details>
+</div>
+
+<script>
+  // Coins HUD
+  const c = parseInt(localStorage.getItem('ldg_coins')||'0',10);
+  document.getElementById('coinCount').textContent = c;
+  window.addEventListener('storage', ()=>{
+    document.getElementById('coinCount').textContent = parseInt(localStorage.getItem('ldg_coins')||'0',10);
+  });
+  // Lazy-load on Start click
+  document.querySelectorAll('.start').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-target');
+      const frame = document.getElementById(id);
+      if (!frame.src) {
+        frame.src = frame.getAttribute('data-src');
+        frame.style.display = 'block';
+        btn.disabled = true;
+        btn.textContent = 'Running…';
+      }
+    });
+  });
+</script>
+</body>
+</html>
